@@ -26,3 +26,5 @@ void createTxtBoxes(Window* w);
 void destroyTxtBoxes(Window* w);
 
 void handleTxtBoxes(Window* w);
+
+void updateTxtBoxText(HWND txtBox, WCHAR* newText);

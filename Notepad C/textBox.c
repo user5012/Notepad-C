@@ -56,7 +56,7 @@ void createTxtBoxes(Window* w)
 	w->txt_boxes = (TextBox**)calloc(txtBoxes_count, sizeof(TextBox*));
 	if (!w->txt_boxes) return;
 
-	w->txt_boxes[0] = txtBox(L"test", 0,0,rc.right - rc.left,rc.bottom - rc.top,w->hwnd, w->hInstance, 3010);
+	w->txt_boxes[0] = txtBox(L"", 0,0,rc.right - rc.left,rc.bottom - rc.top,w->hwnd, w->hInstance, 3010);
 }
 
 void destroyTxtBoxes(Window* w)
@@ -78,4 +78,9 @@ void handleTxtBoxes(Window* w)
 		GetClientRect(w->hwnd, &rc);
 		MoveWindow(w->txt_boxes[0]->txtBox, 0, 0, rc.right - rc.left, rc.bottom - rc.top, TRUE);
 	}
+}
+
+void updateTxtBoxText(HWND txtBox, WCHAR* newText)
+{
+	SetWindowTextW(txtBox, newText);
 }

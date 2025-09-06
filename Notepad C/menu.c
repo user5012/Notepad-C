@@ -43,6 +43,7 @@ void handleMenu(Window* w, int wmId)
         WCHAR* fileName = getFileFromDialog(f);
         if (fileName) {
             WCHAR* fileContent = getFileContent(f);
+            updateTxtBoxText(w->txt_boxes[0]->txtBox, fileContent);
         }
 
         destroyFile(f);
