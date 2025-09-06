@@ -5,7 +5,14 @@
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
+#ifdef _DEBUG
     showConsole();
+#endif
+
+#ifdef NDEBUG
+    
+#endif
+    
 
     Window* myWindow = win(hInstance, nCmdShow, 800, 600, L"OOP Window In C", L"MyWindowClass");
     if (!myWindow)
