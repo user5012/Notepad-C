@@ -200,8 +200,19 @@ void printUtf16(WCHAR* text, File* f)
     free(utf8);
 }
 
-void writeWCHARToFile(FILE* f, WCHAR* text, Encoding enc)
+void writeWCHARToFile(File* f, WCHAR* text, const wchar_t FileName)
 {
+	f->fileName = FileName;
+    FILE* fptr = createFilePtr(f, "wb");
+
+    if (!fptr) {
+        perror("Error opening file for writing");
+        return;
+	}
+
+	fputws(text, fptr);
+
+	// Clean up in destroyFile(f)
     
 }
 

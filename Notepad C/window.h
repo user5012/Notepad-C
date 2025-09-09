@@ -19,6 +19,7 @@ typedef struct Window
 {
     WCHAR* CLASSNAME;
     WCHAR* title;
+	WCHAR* fileNameTitle;
     int width;
     int height;
     HINSTANCE hInstance;
@@ -47,3 +48,6 @@ void MSG_Loop(Window* w);
 void window_deconstruct(Window* w);
 
 void set_font(Window* w, int id, HFONT font);
+
+WCHAR* merge_str(WCHAR* str1, WCHAR* str2);
+void updateTitle(Window* w, WCHAR* newTitle);

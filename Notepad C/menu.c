@@ -43,6 +43,7 @@ void handleMenu(Window* w, int wmId)
         File* f = file(w->hwnd);
         WCHAR* fileName = getFileFromDialog(f);
 		w->openedFileName = fileName;
+		updateTitle(w, w->openedFileName);
         if (fileName) {
             WCHAR* fileContent = getFileContent(f);
             updateTxtBoxText(w->txt_boxes[0]->txtBox, fileContent);
@@ -54,7 +55,15 @@ void handleMenu(Window* w, int wmId)
     case 2: { //Save
 		WCHAR* currentText = getTxtBoxText(w->txt_boxes[0]->txtBox);
         if (currentText) {
-
+			printf("Current Text: %ls\n", currentText);
+            if (!w->openedFileName) {
+                MessageBoxW(w->hwnd, L"No file opened to save!", w->title, MB_OK | MB_ICONERROR);
+                break;
+			}
+			File* f = file(w->hwnd);
+			writeWCHARToFile(f, currentText, w->openedFileName);
+            destroyFile(f);
+			free(currentText);
         }
         break;
     }

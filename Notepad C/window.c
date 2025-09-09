@@ -9,13 +9,12 @@ Window* win(HINSTANCE hInstance, int nCmdShow, int width, int height, WCHAR* tit
     if (!w)
         return NULL;
 
-	
-
+	w->fileNameTitle = L"Untitled";
     w->width = width;
     printf("width set to: %d\n", width);
     w->height = height;
     printf("height set to: %d\n", height);
-    w->title = title;
+    w->title = merge_str(title, L" - ");
     printf("title: %ls\n", title);
     w->CLASSNAME = CLASSNAME;
     printf("classname: %ls\n", CLASSNAME);
@@ -110,7 +109,7 @@ HWND create_window(Window* w)
     HWND hwnd = CreateWindowEx(
         0,
         w->CLASSNAME,
-        w->title,
+        merge_str(w->title, w->fileNameTitle),
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT,
         w->width,
@@ -163,7 +162,17 @@ void create_window_things(Window* w)
     }
 }
 
-
+WCHAR* merge_str(WCHAR* str1, WCHAR* str2)
+{
+    size_t baseLen = wcslen(str1);
+    size_t fileLen = wcslen(str2);
+    size_t totalLen = baseLen + fileLen + 1; // +1 for null terminator
+    WCHAR* mergeStr = (WCHAR*)malloc(totalLen * sizeof(WCHAR));
+    if (!mergeStr) return;
+    wcscpy_s(mergeStr, totalLen, str1);
+    wcscat_s(mergeStr, totalLen, str2);
+	return mergeStr;
+}
 
 void show_window(Window* w)
 {
@@ -201,4 +210,12 @@ void set_font(Window* w, int id, HFONT font)
     {
         SendMessageW(hLabel, WM_SETFONT, (WPARAM)font, TRUE);
     }
+}
+
+void updateTitle(Window* w, WCHAR* newTitle)
+{
+    if (!w || !newTitle) return;
+    WCHAR* mergedTitle = merge_str(w->title, newTitle);
+    SetWindowTextW(w->hwnd, mergedTitle);
+    free(mergedTitle);
 }
