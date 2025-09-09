@@ -14,6 +14,7 @@ Menu* menu()
 void destroyMenu(Menu* m)
 {
     if (!m) return;
+	if (m->hMenu) DestroyMenu(m->hMenu);
     free(m);
 }
 
@@ -41,6 +42,7 @@ void handleMenu(Window* w, int wmId)
         /*MessageBoxW(w->hwnd, L"Open Pressed!", w->title, MB_OK);*/
         File* f = file(w->hwnd);
         WCHAR* fileName = getFileFromDialog(f);
+		w->openedFileName = fileName;
         if (fileName) {
             WCHAR* fileContent = getFileContent(f);
             updateTxtBoxText(w->txt_boxes[0]->txtBox, fileContent);
@@ -50,7 +52,10 @@ void handleMenu(Window* w, int wmId)
         break;
     }
     case 2: { //Save
-        MessageBoxW(w->hwnd, L"Save Pressed!", w->title, MB_OK);
+		WCHAR* currentText = getTxtBoxText(w->txt_boxes[0]->txtBox);
+        if (currentText) {
+
+        }
         break;
     }
     case 3: { //Exit

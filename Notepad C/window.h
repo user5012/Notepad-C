@@ -31,11 +31,14 @@ typedef struct Window
     Menu* menu;
     TextBox** txt_boxes;
     int txt_boxes_count;
+    WCHAR* openedFileName;
 } Window;
 
 Window* win(HINSTANCE hInstance, int nCmdShow, int width, int height, WCHAR* title, WCHAR* CLASSNAME);
 
 HWND create_window(Window* w);
+
+void create_window_things(Window* w);
 
 void show_window(Window* w);
 

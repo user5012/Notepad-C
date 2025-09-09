@@ -5,9 +5,11 @@ HFONT hLabelFont = NULL;
 
 Window* win(HINSTANCE hInstance, int nCmdShow, int width, int height, WCHAR* title, WCHAR* CLASSNAME)
 {
-    Window* w = (Window*)malloc(sizeof(Window));
+    Window* w = (Window*)calloc(1, sizeof(Window));
     if (!w)
         return NULL;
+
+	
 
     w->width = width;
     printf("width set to: %d\n", width);
@@ -19,7 +21,16 @@ Window* win(HINSTANCE hInstance, int nCmdShow, int width, int height, WCHAR* tit
     printf("classname: %ls\n", CLASSNAME);
     w->hInstance = hInstance;
     w->nCmdShow = nCmdShow;
+
+    w->label_count = 0;
+    w->button_count = 0;
+    w->txt_boxes_count = 0;
+    w->menu = NULL;
+
+
     w->hwnd = create_window(w);
+	create_window_things(w);
+	printf("hwnd: %p\n", w->hwnd);
     printf("Created window succesfully!\n");
 
     return w;
@@ -41,38 +52,6 @@ LRESULT WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         CREATESTRUCT* pCreate = (CREATESTRUCT*)lParam;
         Window* w = (Window*)pCreate->lpCreateParams;
         SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)w);
-
-        //menu
-        attachMenu(w);
-
-        //txt boxes
-        createTxtBoxes(w);
-
-        // labels
-        //create_labels(w);
-
-        ////buttons
-        //create_buttons(w);
-
-        // create fonts
-        hLabelFont = CreateFont(16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, L"Arial");
-
-        // set font
-        if (hLabelFont)
-        {
-            if (w && w->label_count > 0)
-                for (int i = 0; i < w->label_count; i++) {
-                    set_font(w, w->labels[i]->id, hLabelFont);
-                }
-            if (w && w->button_count > 0)
-                for (int i = 0; i < w->button_count; i++) {
-                    set_font(w, w->buttons[i]->id, hLabelFont);
-                }
-            if (w && w->txt_boxes_count > 0)
-                for (int i = 0; i < w->txt_boxes_count; i++) {
-                    set_font(w, w->txt_boxes[i]->id, hLabelFont);
-                }
-        }
 
         break;
     }
@@ -120,7 +99,7 @@ LRESULT WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 HWND create_window(Window* w)
 {
     WNDCLASS wc = { 0 };
-    wc.lpfnWndProc = WindowProc; // add later
+    wc.lpfnWndProc = WindowProc;
     wc.hInstance = w->hInstance;
     wc.lpszClassName = w->CLASSNAME;
     wc.hCursor = LoadCursor(NULL, IDC_ARROW);
@@ -145,6 +124,43 @@ HWND create_window(Window* w)
         return NULL;
 
     return hwnd;
+}
+
+void create_window_things(Window* w)
+{
+    //menu
+    attachMenu(w);
+    printf("Menu attached\n");
+
+    //txt boxes
+    createTxtBoxes(w);
+    printf("Text boxes created\n");
+
+    // labels
+    //create_labels(w);
+
+    ////buttons
+    //create_buttons(w);
+
+    // create fonts
+    hLabelFont = CreateFont(16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, L"Arial");
+
+    // set font
+    if (hLabelFont)
+    {
+        if (w && w->label_count > 0)
+            for (int i = 0; i < w->label_count; i++) {
+                set_font(w, w->labels[i]->id, hLabelFont);
+            }
+        if (w && w->button_count > 0)
+            for (int i = 0; i < w->button_count; i++) {
+                set_font(w, w->buttons[i]->id, hLabelFont);
+            }
+        if (w && w->txt_boxes_count > 0)
+            for (int i = 0; i < w->txt_boxes_count; i++) {
+                set_font(w, w->txt_boxes[i]->id, hLabelFont);
+            }
+    }
 }
 
 

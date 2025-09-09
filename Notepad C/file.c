@@ -200,3 +200,8 @@ void printUtf16(WCHAR* text, File* f)
     free(utf8);
 }
 
+void writeWCHARToFile(FILE* f, WCHAR* text, Encoding enc)
+{
+    
+}
+

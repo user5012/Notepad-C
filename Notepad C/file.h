@@ -32,3 +32,5 @@ FILE* createFilePtr(File* f, wchar_t* mode);
 WCHAR* readTextFileToWCHAR(FILE* f, Encoding enc, size_t* outLength);
 
 void printUtf16(WCHAR* text, File* f);
+
+void writeWCHARToFile(FILE* f, WCHAR* text, Encoding enc);

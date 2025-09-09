@@ -84,3 +84,16 @@ void updateTxtBoxText(HWND txtBox, WCHAR* newText)
 {
 	SetWindowTextW(txtBox, newText);
 }
+
+WCHAR* getTxtBoxText(HWND txtBox)
+{
+	WCHAR* text = NULL;
+	int length = GetWindowTextLengthW(txtBox);
+	if (length > 0) {
+		text = (WCHAR*)malloc((length + 1) * sizeof(WCHAR));
+		if (text) {
+			GetWindowTextW(txtBox, text, length + 1);
+		}
+	}
+	return text;
+}
