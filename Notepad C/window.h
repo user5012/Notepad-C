@@ -15,6 +15,8 @@ typedef struct Menu Menu;
 
 typedef struct TextBox TextBox;
 
+typedef struct File File;
+
 typedef struct Window
 {
     WCHAR* CLASSNAME;
@@ -33,6 +35,7 @@ typedef struct Window
     TextBox** txt_boxes;
     int txt_boxes_count;
     WCHAR* openedFileName;
+    File* OpenedFilePtr;
 } Window;
 
 Window* win(HINSTANCE hInstance, int nCmdShow, int width, int height, WCHAR* title, WCHAR* CLASSNAME);

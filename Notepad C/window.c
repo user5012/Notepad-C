@@ -200,6 +200,7 @@ void window_deconstruct(Window* w)
     if (w->menu) destroyMenu(w->menu);
     if (w && w->txt_boxes_count > 0)
         destroyTxtBoxes(w);
+	if (w->openedFileName) free(w->openedFileName);
     free(w);
 }
 

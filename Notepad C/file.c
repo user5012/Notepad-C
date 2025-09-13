@@ -11,9 +11,18 @@ File* file(HWND hwnd)
     f->parentHwnd = hwnd;
     f->fileName = NULL; //init fileName
     f->fileContent = NULL; // init
-    f->fptr = NULL;
+    f->hFile = NULL;
 
     return f;
+}
+
+void setFileName(File* f, WCHAR* name)
+{
+    if (f->fileName) free(f->fileName);
+    size_t len = wcslen(name);
+    f->fileName = malloc((len + 1) * sizeof(WCHAR));
+    if (!f->fileName) return;
+    wcscpy_s(f->fileName, len + 1, name);
 }
 
 void destroyFile(File* f)
@@ -22,7 +31,7 @@ void destroyFile(File* f)
     if (f->fileContent) free(f->fileContent);
     if (f->fileName) free(f->fileName);
 
-    if (f->fptr) fclose(f->fptr);
+    if (f->hFile) CloseHandle(f->hFile);
 
 
     free(f);
@@ -62,27 +71,41 @@ WCHAR* getFileFromDialog(File* f)
 
 WCHAR* getFileContent(File* f)
 {
+    //Open File
+	f->hFile = CreateFileW(f->fileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (f->hFile == INVALID_HANDLE_VALUE) {
+		perror("Error opening file");
+		return NULL;
+	}
 
-    f->fptr = createFilePtr(f, L"rb");
+    // get file size
+	DWORD fileSize = GetFileSize(f->hFile, NULL);
+    if (fileSize == INVALID_FILE_SIZE || fileSize == 0) {
+        perror("Error getting file size or file is empty");
+        CloseHandle(f->hFile);
+        return NULL;
+    }
+	WCHAR* buffer = (WCHAR*)malloc(fileSize + sizeof(WCHAR));
+	if (!buffer) {
+		perror("Memory allocation failed");
+		CloseHandle(f->hFile);
+		return NULL;
+	}
+
+	DWORD bytesRead;
+    if (!ReadFile(f->hFile, buffer, fileSize, &bytesRead, NULL)) {
+		wprintf(L"Error reading file: %d\n", GetLastError());
+		free(buffer);
+		CloseHandle(f->hFile);
+		return NULL;
+    }
+
+	buffer[bytesRead / sizeof(WCHAR)] = L'\0'; // Null-terminate the string
     
-    unsigned char bom[3] = { 0 };
-    fread(bom, 1, 3, f->fptr);
-    rewind(f->fptr);
-
-    Encoding enc = ENC_ANSI; // default fallback
-    if (bom[0] == 0xEF && bom[1] == 0xBB && bom[2] == 0xBF)
-        enc = ENC_UTF8;
-    else if (bom[0] == 0xFF && bom[1] == 0xFE)
-        enc = ENC_UTF16LE;
-    else if (bom[0] == 0xFE && bom[1] == 0xFF)
-        enc = ENC_UTF16BE;
-
-    size_t wlen;
-    f->fileContent = readTextFileToWCHAR(f->fptr, enc, &wlen);
-    printf("File Contents: \n");
-    printUtf16(f->fileContent, f);
-
-    return f->fileContent;
+	wprintf(L"File content read (%d bytes):\n%ls\n", bytesRead, buffer);
+	f->fileContent = buffer;
+    CloseHandle(f->hFile); //clear handler
+	return f->fileContent;
 }
 
 FILE* createFilePtr(File* f, const wchar_t* mode)
@@ -97,120 +120,23 @@ FILE* createFilePtr(File* f, const wchar_t* mode)
     return fileptr;
 }
 
-WCHAR* readTextFileToWCHAR(FILE* f, Encoding enc, size_t* outLength)
+void writeWCHARToFile(File* f, WCHAR* text)
 {
-    if (!f) return NULL;
 
-    // Get file size
-    fseek(f, 0, SEEK_END);
-    long fSize = ftell(f);
-    rewind(f);
+	if (!f || !text) return;
 
-    if (fSize <= 0) return NULL;
+	f->hFile = CreateFileW(f->fileName, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
-    // Read file into buffer
-    char* buffer = malloc(fSize + 1);
-    if (!buffer) return NULL;
+	DWORD bytesWritten;
+	BOOL success = WriteFile(f->hFile, text, (DWORD)(wcslen(text) * sizeof(WCHAR)), &bytesWritten, NULL);
 
-    size_t bytesRead = fread(buffer, 1, fSize, f);
-    buffer[bytesRead] = '\0';
-
-    WCHAR* wbuffer = NULL;
-    size_t wlen = 0;
-
-    if (enc == ENC_UTF8 || enc == ENC_ANSI)
-    {
-        UINT codepage = (enc == ENC_UTF8) ? CP_UTF8 : CP_ACP;
-        char* start = buffer;
-        int byteCount = (int)bytesRead;
-
-        // Skip UTF-8 BOM if present
-        if (enc == ENC_UTF8 && bytesRead >= 3 &&
-            (unsigned char)buffer[0] == 0xEF &&
-            (unsigned char)buffer[1] == 0xBB &&
-            (unsigned char)buffer[2] == 0xBF)
-        {
-            start += 3;
-            byteCount -= 3;
-        }
-
-        wlen = MultiByteToWideChar(codepage, 0, start, byteCount, NULL, 0);
-        if (wlen > 0)
-        {
-            wbuffer = malloc((wlen + 1) * sizeof(WCHAR));
-            if (!wbuffer) { free(buffer); return NULL; }
-            MultiByteToWideChar(codepage, 0, start, byteCount, wbuffer, (int)wlen);
-            wbuffer[wlen] = L'\0';
-        }
-    }
-    else if (enc == ENC_UTF16LE)
-    {
-        size_t startOffset = 0;
-        if (bytesRead >= 2 && (unsigned char)buffer[0] == 0xFF && (unsigned char)buffer[1] == 0xFE)
-            startOffset = 2;
-
-        size_t charCount = (bytesRead - startOffset) / sizeof(WCHAR);
-        if (charCount > 0)
-        {
-            wbuffer = malloc((charCount + 1) * sizeof(WCHAR));
-            if (!wbuffer) { free(buffer); return NULL; }
-            memcpy(wbuffer, buffer + startOffset, charCount * sizeof(WCHAR));
-            wbuffer[charCount] = L'\0';
-            wlen = charCount;
-        }
-    }
-    else if (enc == ENC_UTF16BE)
-    {
-        size_t startOffset = 0;
-        if (bytesRead >= 2 && (unsigned char)buffer[0] == 0xFE && (unsigned char)buffer[1] == 0xFF)
-            startOffset = 2;
-
-        size_t charCount = (bytesRead - startOffset) / sizeof(WCHAR);
-        if (charCount > 0)
-        {
-            wbuffer = malloc((charCount + 1) * sizeof(WCHAR));
-            if (!wbuffer) { free(buffer); return NULL; }
-
-            for (size_t i = 0; i < charCount; i++)
-            {
-                wbuffer[i] = ((unsigned char)buffer[startOffset + 2 * i] << 8) |
-                    (unsigned char)buffer[startOffset + 2 * i + 1];
-            }
-            wbuffer[charCount] = L'\0';
-            wlen = charCount;
-        }
-    }
-
-    free(buffer);
-
-    if (outLength) *outLength = wlen;
-    return wbuffer;
-}
-
-
-void printUtf16(WCHAR* text, File* f)
-{
-    SetConsoleOutputCP(CP_UTF8); // switch console to UTF-8
-    int wlen = WideCharToMultiByte(CP_UTF8, 0, f->fileContent, -1, NULL, 0, NULL, NULL);
-    char* utf8 = malloc(wlen);
-    WideCharToMultiByte(CP_UTF8, 0, f->fileContent, -1, utf8, wlen, NULL, NULL);
-    
-    printf("%s\n", utf8);
-
-    free(utf8);
-}
-
-void writeWCHARToFile(File* f, WCHAR* text, const wchar_t FileName)
-{
-	f->fileName = FileName;
-    FILE* fptr = createFilePtr(f, "wb");
-
-    if (!fptr) {
-        perror("Error opening file for writing");
-        return;
+	if (!success) {
+		wprintf(L"Error writing to file: %d\n", GetLastError());
+	}
+	else {
+		wprintf(L"Wrote %d bytes to file successfully.\n", bytesWritten);
 	}
 
-	fputws(text, fptr);
 
 	// Clean up in destroyFile(f)
     

@@ -47,22 +47,25 @@ void handleMenu(Window* w, int wmId)
         if (fileName) {
             WCHAR* fileContent = getFileContent(f);
             updateTxtBoxText(w->txt_boxes[0]->txtBox, fileContent);
+			w->OpenedFilePtr = f;
         }
-
-        destroyFile(f);
+		else {
+			perror("No file selected");
+            destroyFile(f);
+		}
+        
         break;
     }
     case 2: { //Save
 		WCHAR* currentText = getTxtBoxText(w->txt_boxes[0]->txtBox);
+		wprintf(L"Text to save: %ls\n", currentText);
         if (currentText) {
 			printf("Current Text: %ls\n", currentText);
             if (!w->openedFileName) {
                 MessageBoxW(w->hwnd, L"No file opened to save!", w->title, MB_OK | MB_ICONERROR);
                 break;
 			}
-			File* f = file(w->hwnd);
-			writeWCHARToFile(f, currentText, w->openedFileName);
-            destroyFile(f);
+			writeWCHARToFile(w->OpenedFilePtr, currentText);
 			free(currentText);
         }
         break;
