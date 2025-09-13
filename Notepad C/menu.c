@@ -20,9 +20,9 @@ void destroyMenu(Menu* m)
 
 void addMenuItems(Menu* m)
 {
-    AppendMenuW(m->hFileMenu, MF_STRING, 0, L"&Open");
-    AppendMenuW(m->hFileMenu, MF_STRING, 1, L"&Save");
-	AppendMenuW(m->hFileMenu, MF_STRING, 2, L"&Save As");
+    AppendMenuW(m->hFileMenu, MF_STRING, 0, L"&Open\tCtrl+O");
+    AppendMenuW(m->hFileMenu, MF_STRING, 1, L"&Save\tCtrl+S");
+	AppendMenuW(m->hFileMenu, MF_STRING, 2, L"&Save As\tCtrl+Alt+S");
 	AppendMenuW(m->hFileMenu, MF_SEPARATOR, 3, NULL);
     AppendMenuW(m->hFileMenu, MF_STRING, 4, L"&Exit");
 

@@ -25,6 +25,8 @@ Window* win(HINSTANCE hInstance, int nCmdShow, int width, int height, WCHAR* tit
     w->button_count = 0;
     w->txt_boxes_count = 0;
     w->menu = NULL;
+    addHaccelToWindow(w);
+    printf("Keys added\n");
 
 
     w->hwnd = create_window(w);
@@ -61,6 +63,9 @@ static LRESULT WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             handle_buttons(wmId, w, wmEvent);
         if (w && w->menu)
             handleMenu(w, wmId);
+
+        printf("WM_COMMAND triggered: id=%d\n", wmId);
+
         break;
     }
     case WM_CTLCOLORSTATIC: {
@@ -131,9 +136,14 @@ HWND create_window(Window* w)
 
 void create_window_things(Window* w)
 {
+    
+
     //menu
     attachMenu(w);
     printf("Menu attached\n");
+
+    //keys
+    
 
     //txt boxes
     createTxtBoxes(w);
@@ -189,8 +199,10 @@ void MSG_Loop(Window* w)
     MSG msg = { 0 };
     while (GetMessageW(&msg, NULL, 0, 0))
     {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
+		if (!TranslateAccelerator(GetAncestor(msg.hwnd, GA_ROOT), w->keys->hAccel, &msg)) {
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
     }
 }
 
@@ -209,6 +221,7 @@ void window_deconstruct(Window* w)
     {
         DeleteObject(hLabelFont); // clear hlabelfont
     }
+	if (w->keys) destroyKeys(w->keys);
     free(w);
 }
 

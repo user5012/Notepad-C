@@ -4,6 +4,9 @@
 #include "label.h"
 #include "menu.h"
 #include "textBox.h"
+#include "file.h"
+#include "keys.h"
+
 #define ID_LABEL_1 1010
 #define ID_BUTTON_1 2010
 
@@ -16,7 +19,7 @@ typedef struct Menu Menu;
 typedef struct TextBox TextBox;
 
 typedef struct File File;
-
+typedef struct Keys Keys;
 typedef struct Window
 {
     WCHAR* CLASSNAME;
@@ -36,6 +39,7 @@ typedef struct Window
     int txt_boxes_count;
     WCHAR* openedFileName;
     File* OpenedFilePtr;
+	Keys* keys;
 } Window;
 
 Window* win(HINSTANCE hInstance, int nCmdShow, int width, int height, WCHAR* title, WCHAR* CLASSNAME);
