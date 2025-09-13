@@ -55,7 +55,7 @@ void set_font(Window* w, int id, HFONT font);
 void closeWin(Window* w);
 BOOL closeWinAsk(Window* w);
 
-BOOL isFileSaved(Window* w);
+BOOL isFileSaved(Window* w, WCHAR* currentText);
 
 WCHAR* merge_str(WCHAR* str1, WCHAR* str2);
 void updateTitle(Window* w, WCHAR* newTitle);

@@ -223,8 +223,16 @@ void set_font(Window* w, int id, HFONT font)
 
 BOOL closeWinAsk(Window* w)
 {
-	if (isFileSaved(w)) return TRUE;
-	int result = MessageBoxW(w->hwnd, L"Do you want to save changes to your file?", w->title, MB_YESNOCANCEL | MB_ICONQUESTION);
+    WCHAR* currentText = getTxtBoxText(w->txt_boxes[0]->txtBox);
+    if (!currentText) {
+		free(currentText);
+		return TRUE;
+    }
+    if (isFileSaved(w, currentText)) {
+		free(currentText);
+		return TRUE;
+    }
+    int result = MessageBoxW(w->hwnd, L"Do you want to save changes to your file?", w->title, MB_YESNOCANCEL | MB_ICONQUESTION);
 	if (result == IDCANCEL) return FALSE;
     if (result == IDYES) {
 		saveFile(w);
@@ -245,9 +253,8 @@ void closeWin(Window* w)
 }
 
 
-BOOL isFileSaved(Window* w) {
+BOOL isFileSaved(Window* w, WCHAR* currentText) {
 	if (!w || !w->OpenedFilePtr) return FALSE;
-    WCHAR* currentText = getTxtBoxText(w->txt_boxes[0]->txtBox);
 	if (currentText == w->OpenedFilePtr->fileContent) {
 		free(currentText);
 		return TRUE;
