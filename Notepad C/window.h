@@ -64,3 +64,5 @@ BOOL isFileSaved(Window* w, WCHAR* currentText);
 WCHAR* merge_str(WCHAR* str1, WCHAR* str2);
 void updateTitle(Window* w, WCHAR* newTitle);
 
+void updateTitleIfChanges(Window* w);
+void remove_wchar(wchar_t* str, wchar_t target);

@@ -63,6 +63,9 @@ static LRESULT WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             handle_buttons(wmId, w, wmEvent);
         if (w && w->menu)
             handleMenu(w, wmId);
+        if (wmId == 3010) {
+            updateTitleIfChanges(w);
+        }
 
         printf("WM_COMMAND triggered: id=%d\n", wmId);
 
@@ -251,6 +254,7 @@ BOOL closeWinAsk(Window* w)
 		saveFile(w);
 		return TRUE;
     }
+    free(currentText);
     return TRUE;
 }
 void closeWin(Window* w)
@@ -264,6 +268,38 @@ void closeWin(Window* w)
         return;
     }
 }
+
+void updateTitleIfChanges(Window* w) {
+    WCHAR* currentText = getTxtBoxText(w->txt_boxes[0]->txtBox);
+    if (!currentText) {
+        free(currentText);
+        (w->title, L"*");
+        return;
+    }
+    if (isFileSaved(w, currentText)) {
+        free(currentText);
+        remove_wchar(w->title, L"*");
+        return;
+    }
+	free(currentText);
+    SetWindowTextW(w->hwnd, merge_str(w->title, L"*"));
+    
+
+}
+
+void remove_wchar(wchar_t* str, wchar_t target) {
+    wchar_t* src = str;
+    wchar_t* dst = str;
+
+    while (*src) {
+        if (*src != target) {
+            *dst++ = *src;  // copy only if not the target char
+        }
+        src++;
+    }
+    *dst = L'\0';  // null terminate
+}
+
 
 
 BOOL isFileSaved(Window* w, WCHAR* currentText) {
