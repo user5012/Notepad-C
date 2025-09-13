@@ -35,16 +35,13 @@ Window* win(HINSTANCE hInstance, int nCmdShow, int width, int height, WCHAR* tit
     return w;
 }
 
-LRESULT WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static LRESULT WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
     {
     case WM_DESTROY:
-        if (hLabelFont)
-        {
-            DeleteObject(hLabelFont); // clear hlabelfont
-        }
         PostQuitMessage(0);
+
         return 0;
     case WM_CREATE:
     {
@@ -55,12 +52,12 @@ LRESULT WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         break;
     }
     case WM_COMMAND: {
-        
+
         int wmId = LOWORD(wParam);
         int wmEvent = HIWORD(wParam);
         HWND hCtrl = (HWND)lParam;
         Window* w = (Window*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
-        if (w && w->button_count> 0)
+        if (w && w->button_count > 0)
             handle_buttons(wmId, w, wmEvent);
         if (w && w->menu)
             handleMenu(w, wmId);
@@ -88,6 +85,13 @@ LRESULT WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         HDC hdc = BeginPaint(hwnd, &ps);
         FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
         EndPaint(hwnd, &ps);
+        return 0;
+    }
+    case WM_CLOSE: {
+        Window* w = (Window*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+        if (w) {
+            closeWin(w);
+        }
         return 0;
     }
     }
@@ -201,6 +205,10 @@ void window_deconstruct(Window* w)
     if (w && w->txt_boxes_count > 0)
         destroyTxtBoxes(w);
 	if (w->openedFileName) free(w->openedFileName);
+    if (hLabelFont)
+    {
+        DeleteObject(hLabelFont); // clear hlabelfont
+    }
     free(w);
 }
 
@@ -210,6 +218,43 @@ void set_font(Window* w, int id, HFONT font)
     if (hLabel && font)
     {
         SendMessageW(hLabel, WM_SETFONT, (WPARAM)font, TRUE);
+    }
+}
+
+BOOL closeWinAsk(Window* w)
+{
+	if (isFileSaved(w)) return TRUE;
+	int result = MessageBoxW(w->hwnd, L"Do you want to save changes to your file?", w->title, MB_YESNOCANCEL | MB_ICONQUESTION);
+	if (result == IDCANCEL) return FALSE;
+    if (result == IDYES) {
+		saveFile(w);
+		return TRUE;
+    }
+    return TRUE;
+}
+void closeWin(Window* w)
+{
+    if (closeWinAsk(w)) {
+		printf("Closing window...\n");
+		PostQuitMessage(0);
+	}
+    else {
+		printf("Close cancelled.\n");
+        return;
+    }
+}
+
+
+BOOL isFileSaved(Window* w) {
+	if (!w || !w->OpenedFilePtr) return FALSE;
+    WCHAR* currentText = getTxtBoxText(w->txt_boxes[0]->txtBox);
+	if (currentText == w->OpenedFilePtr->fileContent) {
+		free(currentText);
+		return TRUE;
+	}
+    else {
+		free(currentText);
+		return FALSE;
     }
 }
 

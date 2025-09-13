@@ -20,9 +20,11 @@ void destroyMenu(Menu* m)
 
 void addMenuItems(Menu* m)
 {
-    AppendMenuW(m->hFileMenu, MF_STRING, 1, L"&Open");
-    AppendMenuW(m->hFileMenu, MF_STRING, 2, L"&Save");
-    AppendMenuW(m->hFileMenu, MF_STRING, 3, L"&Exit");
+    AppendMenuW(m->hFileMenu, MF_STRING, 0, L"&Open");
+    AppendMenuW(m->hFileMenu, MF_STRING, 1, L"&Save");
+	AppendMenuW(m->hFileMenu, MF_STRING, 2, L"&Save As");
+	AppendMenuW(m->hFileMenu, MF_SEPARATOR, 3, NULL);
+    AppendMenuW(m->hFileMenu, MF_STRING, 4, L"&Exit");
 
     AppendMenuW(m->hMenu, MF_POPUP, (UINT_PTR)m->hFileMenu, L"&File");
 }
@@ -38,10 +40,10 @@ void attachMenu(Window* w)
 void handleMenu(Window* w, int wmId)
 {
     switch (wmId) {
-    case 1: { //Open
+    case 0: { //Open
         /*MessageBoxW(w->hwnd, L"Open Pressed!", w->title, MB_OK);*/
         File* f = file(w->hwnd);
-        WCHAR* fileName = getFileFromDialog(f);
+        WCHAR* fileName = getFileFromDialog(f, TRUE);
 		w->openedFileName = fileName;
 		updateTitle(w, w->openedFileName);
         if (fileName) {
@@ -56,22 +58,17 @@ void handleMenu(Window* w, int wmId)
         
         break;
     }
-    case 2: { //Save
-		WCHAR* currentText = getTxtBoxText(w->txt_boxes[0]->txtBox);
-		wprintf(L"Text to save: %ls\n", currentText);
-        if (currentText) {
-			printf("Current Text: %ls\n", currentText);
-            if (!w->openedFileName) {
-                MessageBoxW(w->hwnd, L"No file opened to save!", w->title, MB_OK | MB_ICONERROR);
-                break;
-			}
-			writeWCHARToFile(w->OpenedFilePtr, currentText);
-			free(currentText);
-        }
+    case 1: { //Save
+		saveFile(w);
+        
         break;
     }
-    case 3: { //Exit
-        PostQuitMessage(0);
+    case 2: { //Save As
+		saveFileAs(w);
+		break;
+    }
+    case 4: { //Exit
+		closeWin(w);
         break;
     }
     }

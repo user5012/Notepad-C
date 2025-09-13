@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <wchar.h>
 
+
 File* file(HWND hwnd)
 {
     File* f = (File*)malloc(sizeof(File));
@@ -37,7 +38,7 @@ void destroyFile(File* f)
     free(f);
 }
 
-WCHAR* getFileFromDialog(File* f)
+WCHAR* getFileFromDialog(File* f, BOOL isOpenFileDialog)
 {
     OPENFILENAME ofn;
     wchar_t szFile[3780]; //buffer for filePath
@@ -52,21 +53,43 @@ WCHAR* getFileFromDialog(File* f)
     ofn.nFilterIndex = 1;
     ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 
-    if (GetOpenFileNameW(&ofn)) {
-        size_t len = wcslen(ofn.lpstrFile);
-        WCHAR* result = malloc((len + 1) * sizeof(WCHAR));
-        if (!result) return NULL;
-        wcscpy_s(result, len + 1, ofn.lpstrFile);
-        f->fileName = result;
+    
+    if (isOpenFileDialog) {
+        ofn.lpstrTitle = L"Open File";
+        if (GetOpenFileNameW(&ofn)) {
+            size_t len = wcslen(ofn.lpstrFile);
+            WCHAR* result = malloc((len + 1) * sizeof(WCHAR));
+            if (!result) return NULL;
+            wcscpy_s(result, len + 1, ofn.lpstrFile);
+            f->fileName = result;
 
-        wprintf(L"Selected File Name: %ls\n", f->fileName);
-        return f->fileName;
+            wprintf(L"Selected File Name: %ls\n", f->fileName);
+            return f->fileName;
+        }
+        else
+        {
+            printf("No file selected\n");
+            return NULL;
+        }
     }
-    else
-    {
-        printf("No file selected\n");
-        return NULL;
-    }
+	else {
+		ofn.lpstrTitle = L"Save File As";
+		if (GetSaveFileNameW(&ofn)) {
+			size_t len = wcslen(ofn.lpstrFile);
+			WCHAR* result = malloc((len + 1) * sizeof(WCHAR));
+			if (!result) return NULL;
+			wcscpy_s(result, len + 1, ofn.lpstrFile);
+			f->fileName = result;
+			wprintf(L"Selected File Name: %ls\n", f->fileName);
+			return f->fileName;
+		}
+		else
+		{
+			printf("No file selected\n");
+			return NULL;
+		}
+	}
+    
 }
 
 WCHAR* getFileContent(File* f)
@@ -137,8 +160,33 @@ void writeWCHARToFile(File* f, WCHAR* text)
 		wprintf(L"Wrote %d bytes to file successfully.\n", bytesWritten);
 	}
 
+	CloseHandle(f->hFile); // close handle after writing
 
 	// Clean up in destroyFile(f)
     
 }
 
+void saveFile(Window* w) {
+    WCHAR* currentText = getTxtBoxText(w->txt_boxes[0]->txtBox);
+    wprintf(L"Text to save: %ls\n", currentText);
+    if (currentText) {
+        printf("Current Text: %ls\n", currentText);
+        if (!w->openedFileName) {
+            // save as logic
+            saveFileAs(w);
+
+        }
+        writeWCHARToFile(w->OpenedFilePtr, currentText);
+        free(currentText);
+    }
+}
+
+void saveFileAs(Window* w) {
+    File* f = file(w->hwnd);
+    WCHAR* fileName = getFileFromDialog(f, FALSE);
+    if (fileName) {
+        w->openedFileName = fileName;
+        updateTitle(w, w->openedFileName);
+        writeWCHARToFile(f, getTxtBoxText(w->txt_boxes[0]->txtBox));
+    }
+}

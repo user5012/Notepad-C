@@ -52,5 +52,11 @@ void window_deconstruct(Window* w);
 
 void set_font(Window* w, int id, HFONT font);
 
+void closeWin(Window* w);
+BOOL closeWinAsk(Window* w);
+
+BOOL isFileSaved(Window* w);
+
 WCHAR* merge_str(WCHAR* str1, WCHAR* str2);
 void updateTitle(Window* w, WCHAR* newTitle);
+
