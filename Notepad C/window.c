@@ -8,14 +8,18 @@ Window* win(HINSTANCE hInstance, int nCmdShow, int width, int height, WCHAR* tit
     Window* w = (Window*)calloc(1, sizeof(Window));
     if (!w)
         return NULL;
-
+    w->isSaved = TRUE;
+	w->OpenedFilePtr = NULL;
+	w->openedFileName = NULL;
 	w->fileNameTitle = L"Untitled";
     w->width = width;
     printf("width set to: %d\n", width);
     w->height = height;
     printf("height set to: %d\n", height);
-    w->title = merge_str(title, L" - ");
+    w->title = title;
+    w->fullTitle = merge_str(w->title, L" - ");
     printf("title: %ls\n", title);
+	printf("full title: %ls\n", w->fullTitle);
     w->CLASSNAME = CLASSNAME;
     printf("classname: %ls\n", CLASSNAME);
     w->hInstance = hInstance;
@@ -118,10 +122,12 @@ HWND create_window(Window* w)
 
     RegisterClass(&wc);
 
+	w->fullTitle = merge_str(w->fullTitle, w->fileNameTitle);
+
     HWND hwnd = CreateWindowEx(
         0,
         w->CLASSNAME,
-        merge_str(w->title, w->fileNameTitle),
+        w->fullTitle,
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT,
         w->width,
@@ -254,7 +260,6 @@ BOOL closeWinAsk(Window* w)
 		saveFile(w);
 		return TRUE;
     }
-    free(currentText);
     return TRUE;
 }
 void closeWin(Window* w)
@@ -270,34 +275,37 @@ void closeWin(Window* w)
 }
 
 void updateTitleIfChanges(Window* w) {
-    WCHAR* currentText = getTxtBoxText(w->txt_boxes[0]->txtBox);
-    if (!currentText) {
-        free(currentText);
-        (w->title, L"*");
+    if (!getTxtBoxText(w->txt_boxes[0]->txtBox)) {
+        SetWindowTextW(w->hwnd, removeWchar(w->fullTitle, L'*'));
+        w->isSaved = TRUE;
         return;
     }
-    if (isFileSaved(w, currentText)) {
-        free(currentText);
-        remove_wchar(w->title, L"*");
+    if (isFileSaved(w, getTxtBoxText(w->txt_boxes[0]->txtBox))) {
+		SetWindowTextW(w->hwnd, removeWchar(w->fullTitle, L'*'));
+        w->isSaved = TRUE;
         return;
     }
-	free(currentText);
-    SetWindowTextW(w->hwnd, merge_str(w->title, L"*"));
-    
-
+    if (w->isSaved) {
+		SetWindowTextW(w->hwnd, merge_str(w->fullTitle, L"*"));
+        w->isSaved = FALSE;
+    }
 }
 
-void remove_wchar(wchar_t* str, wchar_t target) {
-    wchar_t* src = str;
-    wchar_t* dst = str;
+WCHAR* removeWchar(WCHAR* str, WCHAR charToRemove) {
+    if (!str) return NULL;
+
+    WCHAR* src = str;
+    WCHAR* dst = str;
 
     while (*src) {
-        if (*src != target) {
-            *dst++ = *src;  // copy only if not the target char
+        if (*src != charToRemove) {
+            *dst++ = *src;  // copy only if not the char to remove
         }
         src++;
     }
     *dst = L'\0';  // null terminate
+
+    return str;
 }
 
 
@@ -317,7 +325,8 @@ BOOL isFileSaved(Window* w, WCHAR* currentText) {
 void updateTitle(Window* w, WCHAR* newTitle)
 {
     if (!w || !newTitle) return;
-    WCHAR* mergedTitle = merge_str(w->title, newTitle);
-    SetWindowTextW(w->hwnd, mergedTitle);
+    WCHAR* mergedTitle = merge_str(w->fullTitle, newTitle);
+	w->fullTitle = mergedTitle; // update the window's title field
+    SetWindowTextW(w->hwnd, w->fullTitle);
     free(mergedTitle);
 }

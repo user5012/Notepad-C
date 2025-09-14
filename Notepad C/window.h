@@ -24,6 +24,7 @@ typedef struct Window
 {
     WCHAR* CLASSNAME;
     WCHAR* title;
+	WCHAR* fullTitle;
 	WCHAR* fileNameTitle;
     int width;
     int height;
@@ -40,6 +41,7 @@ typedef struct Window
     WCHAR* openedFileName;
     File* OpenedFilePtr;
 	Keys* keys;
+    BOOL isSaved;
 } Window;
 
 Window* win(HINSTANCE hInstance, int nCmdShow, int width, int height, WCHAR* title, WCHAR* CLASSNAME);
@@ -65,4 +67,4 @@ WCHAR* merge_str(WCHAR* str1, WCHAR* str2);
 void updateTitle(Window* w, WCHAR* newTitle);
 
 void updateTitleIfChanges(Window* w);
-void remove_wchar(wchar_t* str, wchar_t target);
+WCHAR* removeWchar(WCHAR* str, WCHAR charToRemove);

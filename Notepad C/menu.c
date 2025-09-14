@@ -50,6 +50,7 @@ void handleMenu(Window* w, int wmId)
             WCHAR* fileContent = getFileContent(f);
             updateTxtBoxText(w->txt_boxes[0]->txtBox, fileContent);
 			w->OpenedFilePtr = f;
+			w->isSaved = TRUE;
         }
 		else {
 			perror("No file selected");

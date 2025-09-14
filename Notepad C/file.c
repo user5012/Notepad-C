@@ -177,6 +177,7 @@ void saveFile(Window* w) {
 
         }
         writeWCHARToFile(w->OpenedFilePtr, currentText);
+		w->isSaved = TRUE;
         free(currentText);
     }
 }
@@ -188,5 +189,6 @@ void saveFileAs(Window* w) {
         w->openedFileName = fileName;
         updateTitle(w, w->openedFileName);
         writeWCHARToFile(f, getTxtBoxText(w->txt_boxes[0]->txtBox));
+		w->isSaved = TRUE;
     }
 }
