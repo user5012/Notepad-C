@@ -24,7 +24,7 @@ void addMenuItems(Menu* m)
     AppendMenuW(m->hFileMenu, MF_STRING, 1, L"&Save\tCtrl+S");
 	AppendMenuW(m->hFileMenu, MF_STRING, 2, L"&Save As\tCtrl+Alt+S");
 	AppendMenuW(m->hFileMenu, MF_SEPARATOR, 3, NULL);
-    AppendMenuW(m->hFileMenu, MF_STRING, 4, L"&Exit");
+    AppendMenuW(m->hFileMenu, MF_STRING, 4, L"&Exit\tAlt+F4");
 
     AppendMenuW(m->hMenu, MF_POPUP, (UINT_PTR)m->hFileMenu, L"&File");
 }
