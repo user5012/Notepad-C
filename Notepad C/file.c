@@ -199,10 +199,6 @@ void saveFile(Window* w) {
 
 void saveFileAs(Window* w) {
 	if (!w) return;
-    if (w->isSaved) {
-        printf("File is already saved, no changes to save.\n");
-        return;
-    }
     File* f = file(w->hwnd);
     WCHAR* fileName = getFileFromDialog(f, FALSE);
     WCHAR* currentText = getTxtBoxText(w->txt_boxes[0]->txtBox);
