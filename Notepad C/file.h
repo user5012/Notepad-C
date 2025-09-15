@@ -21,8 +21,6 @@ WCHAR* getFileFromDialog(File* f, BOOL isOpenFileDialog);
 
 WCHAR* getFileContent(File* f);
 
-FILE* createFilePtr(File* f, wchar_t* mode);
-
 void writeWCHARToFile(File* f, WCHAR* text);
 void setFileName(File* f, WCHAR* name);
 void saveFile(Window* w);

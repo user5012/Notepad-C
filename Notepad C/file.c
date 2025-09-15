@@ -108,41 +108,49 @@ WCHAR* getFileContent(File* f)
         CloseHandle(f->hFile);
         return NULL;
     }
-	WCHAR* buffer = (WCHAR*)malloc(fileSize + sizeof(WCHAR));
-	if (!buffer) {
-		perror("Memory allocation failed");
-		CloseHandle(f->hFile);
-		return NULL;
+	
+	BYTE* raw = (BYTE*)malloc(fileSize + 2);
+    if (!raw) {
+        perror("Memory allocation failed");
+        CloseHandle(f->hFile);
+        return NULL;
 	}
 
 	DWORD bytesRead;
-    if (!ReadFile(f->hFile, buffer, fileSize, &bytesRead, NULL)) {
+    if (!ReadFile(f->hFile, raw, fileSize, &bytesRead, NULL)) {
 		wprintf(L"Error reading file: %d\n", GetLastError());
-		free(buffer);
+		free(raw);
 		CloseHandle(f->hFile);
 		return NULL;
     }
 
-	buffer[bytesRead / sizeof(WCHAR)] = L'\0'; // Null-terminate the string
-    
-	wprintf(L"File content read (%d bytes):\n%ls\n", bytesRead, buffer);
-	f->fileContent = buffer;
     CloseHandle(f->hFile); //clear handler
+
+	WCHAR* wide = NULL;
+    int len = 0;
+	// BOM check for UTF-16 LE
+    if (bytesRead >= 2 && raw[0] == 0xFF && raw[1] == 0xFE) {
+		// assume UTF-16 LE
+		wide = (WCHAR*)(raw + 2); // skip BOM
+		len = (bytesRead - 2) / 2; // each WCHAR is 2 bytes
+		f->fileContent = _wcsdup(wide);
+		free(raw); // free raw buffer as we have duplicated the content
+    }
+    else {
+		// assume UTF-8, convert to WCHAR
+		len = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)raw, bytesRead, NULL, 0);
+		wide = (WCHAR*)malloc((len + 1) * sizeof(WCHAR));
+		MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)raw, bytesRead, wide, len);
+		wide[len] = L'\0'; // null-terminate
+		free(raw); // free raw buffer as we have converted the content
+		f->fileContent = wide;
+	}
+
+    
+	wprintf(L"File content read (%d bytes):\n%ls\n", bytesRead, f->fileContent);
+    
 	return f->fileContent;
 }
-
-FILE* createFilePtr(File* f, const wchar_t* mode)
-{
-    if (!f->fileName) return NULL;
-
-    FILE* fileptr = _wfopen(f->fileName, mode);
-    if (!fileptr) {
-        perror("Error opening file");
-        return NULL;
-    }
-    return fileptr;
-}
-
 void writeWCHARToFile(File* f, WCHAR* text)
 {
 
@@ -182,9 +190,10 @@ void saveFile(Window* w) {
     wprintf(L"Text to save: %ls\n", currentText);
     if (currentText) {
         printf("Current Text: %ls\n", currentText);
-        if (!w->openedFileName) {
+        if (!w->openedFileName || w->OpenedFilePtr) {
             // save as logic
             saveFileAs(w);
+			free(currentText);
 			return;
         }
         writeWCHARToFile(w->OpenedFilePtr, currentText);
