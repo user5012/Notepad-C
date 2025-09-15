@@ -325,8 +325,7 @@ BOOL isFileSaved(Window* w, WCHAR* currentText) {
 void updateTitle(Window* w, WCHAR* newTitle)
 {
     if (!w || !newTitle) return;
-    WCHAR* mergedTitle = merge_str(w->fullTitle, newTitle);
-	w->fullTitle = mergedTitle; // update the window's title field
+	w->fullTitle = merge_str(w->title, L" - "); // reset to base title
+    w->fullTitle = merge_str(w->fullTitle, newTitle); // update the window's title field
     SetWindowTextW(w->hwnd, w->fullTitle);
-    free(mergedTitle);
 }
