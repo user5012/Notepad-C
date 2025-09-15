@@ -192,3 +192,13 @@ void saveFileAs(Window* w) {
 		w->isSaved = TRUE;
     }
 }
+
+void openFile(Window* w) {
+    if (!w->fileToOpen) return;
+	File* f = file(w->hwnd);
+	f->fileName = w->fileToOpen;
+	getFileContent(f);
+	w->OpenedFilePtr = f;
+	updateTxtBoxText(w->txt_boxes[0]->txtBox, f->fileContent);
+	w->isSaved = TRUE;
+}

@@ -3,11 +3,20 @@
 
 HFONT hLabelFont = NULL;
 
-Window* win(HINSTANCE hInstance, int nCmdShow, int width, int height, WCHAR* title, WCHAR* CLASSNAME)
+Window* win(HINSTANCE hInstance, int nCmdShow, int width, int height, WCHAR* title, WCHAR* CLASSNAME, WCHAR* fileToOpen)
 {
     Window* w = (Window*)calloc(1, sizeof(Window));
     if (!w)
         return NULL;
+    if (fileToOpen) {
+        w->fileToOpen = fileToOpen;
+		printf("file to open: %ls\n", fileToOpen);
+    }
+    else
+    {
+		w->fileToOpen = NULL;
+    }
+
     w->isSaved = TRUE;
 	w->OpenedFilePtr = NULL;
 	w->openedFileName = NULL;
@@ -145,7 +154,7 @@ HWND create_window(Window* w)
 
 void create_window_things(Window* w)
 {
-    
+	if (!w) return;
 
     //menu
     attachMenu(w);
@@ -183,6 +192,12 @@ void create_window_things(Window* w)
                 set_font(w, w->txt_boxes[i]->id, hLabelFont);
             }
     }
+
+	// open file if specified
+    if (w->fileToOpen) {
+        openFile(w);
+	}
+	printf("Window things created\n");
 }
 
 WCHAR* merge_str(WCHAR* str1, WCHAR* str2)
@@ -226,6 +241,8 @@ void window_deconstruct(Window* w)
     if (w && w->txt_boxes_count > 0)
         destroyTxtBoxes(w);
 	if (w->openedFileName) free(w->openedFileName);
+	if (w->OpenedFilePtr) destroyFile(w->OpenedFilePtr);
+	if (w->fileToOpen) free(w->fileToOpen);
     if (hLabelFont)
     {
         DeleteObject(hLabelFont); // clear hlabelfont
@@ -275,17 +292,29 @@ void closeWin(Window* w)
 }
 
 void updateTitleIfChanges(Window* w) {
-    if (!getTxtBoxText(w->txt_boxes[0]->txtBox)) {
-        SetWindowTextW(w->hwnd, removeWchar(w->fullTitle, L'*'));
-        w->isSaved = TRUE;
-        return;
+    if (!w->isSaved) {
+        
+        if (w->OpenedFilePtr) {
+            if (w->OpenedFilePtr->fileContent == getTxtBoxText(w->txt_boxes[0]->txtBox)) {
+                SetWindowTextW(w->hwnd, removeWchar(w->fullTitle, L'*'));
+                w->isSaved = TRUE;
+                return;
+            }
+        }                                                                                           // TODO: NEED FIX
+        else {
+            if (!getTxtBoxText(w->txt_boxes[0]->txtBox)) {
+                SetWindowTextW(w->hwnd, removeWchar(w->fullTitle, L'*'));
+                w->isSaved = TRUE;
+                return;
+            }
+        }
+        if (isFileSaved(w, getTxtBoxText(w->txt_boxes[0]->txtBox))) {
+            SetWindowTextW(w->hwnd, removeWchar(w->fullTitle, L'*'));
+            w->isSaved = TRUE;
+            return;
+        }
     }
-    if (isFileSaved(w, getTxtBoxText(w->txt_boxes[0]->txtBox))) {
-		SetWindowTextW(w->hwnd, removeWchar(w->fullTitle, L'*'));
-        w->isSaved = TRUE;
-        return;
-    }
-    if (w->isSaved) {
+    else {
 		SetWindowTextW(w->hwnd, merge_str(w->fullTitle, L"*"));
         w->isSaved = FALSE;
     }

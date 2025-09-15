@@ -5,21 +5,28 @@
 
 
 #ifdef _DEBUG
-int main(void)
+int main(int argc, char* argv)
 {
+	WCHAR* fileToOpen = NULL;
+
+    if (argc == 2) {
+		fileToOpen = (WCHAR*)malloc((strlen(argv[1]) + 1) * sizeof(WCHAR));
+    }
+
+
     HINSTANCE hInstance = GetModuleHandle(NULL);
     int nCmdShow = SW_SHOW;
-    Window* myWindow = win(hInstance, nCmdShow, 800, 600, L"OOP Window In C", L"MyWindowClass");
+    Window* myWindow = win(hInstance, nCmdShow, 800, 600, L"OOP Window In C", L"MyWindowClass", fileToOpen);
     if (!myWindow)
         return 1;
     printf("creating window...\n");
-    
     printf("showing window...\n");
     show_window(myWindow);
     printf("Loop started!\n");
     MSG_Loop(myWindow);
     printf("destroying window\n");
     window_deconstruct(myWindow);
+    free(fileToOpen);
     return 0;
 }
 #endif

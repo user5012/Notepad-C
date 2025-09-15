@@ -22,6 +22,7 @@ typedef struct File File;
 typedef struct Keys Keys;
 typedef struct Window
 {
+    WCHAR* fileToOpen;
     WCHAR* CLASSNAME;
     WCHAR* title;
 	WCHAR* fullTitle;
@@ -44,7 +45,7 @@ typedef struct Window
     BOOL isSaved;
 } Window;
 
-Window* win(HINSTANCE hInstance, int nCmdShow, int width, int height, WCHAR* title, WCHAR* CLASSNAME);
+Window* win(HINSTANCE hInstance, int nCmdShow, int width, int height, WCHAR* title, WCHAR* CLASSNAME, WCHAR* fileToOpen);
 
 HWND create_window(Window* w);
 

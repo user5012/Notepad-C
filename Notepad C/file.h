@@ -27,3 +27,4 @@ void writeWCHARToFile(File* f, WCHAR* text);
 void setFileName(File* f, WCHAR* name);
 void saveFile(Window* w);
 void saveFileAs(Window* w);
+void openFile(Window* w);
