@@ -197,6 +197,11 @@ void openFile(Window* w) {
     if (!w->fileToOpen) return;
 	File* f = file(w->hwnd);
 	f->fileName = w->fileToOpen;
+    if (!f->fileName) {
+        perror("No file selected");
+        destroyFile(f);
+        return;
+	}
 	getFileContent(f);
 	w->OpenedFilePtr = f;
 	updateTxtBoxText(w->txt_boxes[0]->txtBox, f->fileContent);

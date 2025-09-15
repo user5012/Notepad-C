@@ -242,7 +242,6 @@ void window_deconstruct(Window* w)
         destroyTxtBoxes(w);
 	if (w->openedFileName) free(w->openedFileName);
 	if (w->OpenedFilePtr) destroyFile(w->OpenedFilePtr);
-	if (w->fileToOpen) free(w->fileToOpen);
     if (hLabelFont)
     {
         DeleteObject(hLabelFont); // clear hlabelfont
