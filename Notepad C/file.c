@@ -30,7 +30,7 @@ void destroyFile(File* f)
 {
     if (!f) return;
     if (f->fileContent) free(f->fileContent);
-    if (f->fileName) free(f->fileName);
+    /*if (f->fileName) free(f->fileName);*/
 
     if (f->hFile) CloseHandle(f->hFile);
 
@@ -127,7 +127,7 @@ WCHAR* getFileContent(File* f)
     
 	wprintf(L"File content read (%d bytes):\n%ls\n", bytesRead, buffer);
 	f->fileContent = buffer;
-    CloseHandle(f->hFile); //clear handler
+    //CloseHandle(f->hFile); //clear handler
 	return f->fileContent;
 }
 

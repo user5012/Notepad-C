@@ -81,6 +81,7 @@ static LRESULT WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
 
         printf("WM_COMMAND triggered: id=%d\n", wmId);
+		if (w) printf("w->isSaved: %d\n", w->isSaved);
 
         break;
     }
@@ -261,13 +262,8 @@ void set_font(Window* w, int id, HFONT font)
 
 BOOL closeWinAsk(Window* w)
 {
-    WCHAR* currentText = getTxtBoxText(w->txt_boxes[0]->txtBox);
-    if (!currentText) {
-		free(currentText);
-		return TRUE;
-    }
-    if (isFileSaved(w, currentText)) {
-		free(currentText);
+    
+    if (isFileSaved(w)) {
 		return TRUE;
     }
     int result = MessageBoxW(w->hwnd, L"Do you want to save changes to your file?", w->title, MB_YESNOCANCEL | MB_ICONQUESTION);
@@ -291,30 +287,28 @@ void closeWin(Window* w)
 }
 
 void updateTitleIfChanges(Window* w) {
-    if (!w->isSaved) {
         
-        if (w->OpenedFilePtr) {
-            if (w->OpenedFilePtr->fileContent == getTxtBoxText(w->txt_boxes[0]->txtBox)) {
-                SetWindowTextW(w->hwnd, removeWchar(w->fullTitle, L'*'));
-                w->isSaved = TRUE;
-                return;
-            }
-        }                                                                                           // TODO: NEED FIX
-        else {
-            if (!getTxtBoxText(w->txt_boxes[0]->txtBox)) {
-                SetWindowTextW(w->hwnd, removeWchar(w->fullTitle, L'*'));
-                w->isSaved = TRUE;
-                return;
-            }
+    if (w->OpenedFilePtr) {
+        printf("OpenedFilePtr exists\n");
+        printf("in save w->openedFilePtr->fileContent: %ls\n", w->OpenedFilePtr->fileContent);
+		printf("in save current text: %ls\n", getTxtBoxText(w->txt_boxes[0]->txtBox));
+		
+        if (isFileSaved(w)) {
+            SetWindowTextW(w->hwnd, removeWchar(w->fullTitle, L'*'));
+            w->isSaved = TRUE;
+            return;
         }
-        if (isFileSaved(w, getTxtBoxText(w->txt_boxes[0]->txtBox))) {
+    }                                                                                           // TODO: NEED FIX
+    else {
+        if (!getTxtBoxText(w->txt_boxes[0]->txtBox)) {
             SetWindowTextW(w->hwnd, removeWchar(w->fullTitle, L'*'));
             w->isSaved = TRUE;
             return;
         }
     }
-    else {
+    if (w->isSaved) {
 		SetWindowTextW(w->hwnd, merge_str(w->fullTitle, L"*"));
+        
         w->isSaved = FALSE;
     }
 }
@@ -338,16 +332,12 @@ WCHAR* removeWchar(WCHAR* str, WCHAR charToRemove) {
 
 
 
-BOOL isFileSaved(Window* w, WCHAR* currentText) {
+BOOL isFileSaved(Window* w) {
 	if (!w || !w->OpenedFilePtr) return FALSE;
-	if (currentText == w->OpenedFilePtr->fileContent) {
-		free(currentText);
-		return TRUE;
-	}
-    else {
-		free(currentText);
-		return FALSE;
-    }
+
+	BOOL cmp = wcscmp(getTxtBoxText(w->txt_boxes[0]->txtBox), w->OpenedFilePtr->fileContent) == 0;
+
+	return cmp;
 }
 
 void updateTitle(Window* w, WCHAR* newTitle)
