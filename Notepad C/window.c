@@ -80,8 +80,8 @@ static LRESULT WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             updateTitleIfChanges(w);
         }
 
-        printf("WM_COMMAND triggered: id=%d\n", wmId);
-		if (w) printf("w->isSaved: %d\n", w->isSaved);
+        /*printf("WM_COMMAND triggered: id=%d\n", wmId);
+		if (w) printf("w->isSaved: %d\n", w->isSaved);*/
 
         break;
     }
@@ -262,7 +262,7 @@ void set_font(Window* w, int id, HFONT font)
 
 BOOL closeWinAsk(Window* w)
 {
-    
+	if (!getTxtBoxText(w->txt_boxes[0]->txtBox) && !w->OpenedFilePtr) return TRUE; // no text and no opened file, safe to close
     if (isFileSaved(w)) {
 		return TRUE;
     }
@@ -288,27 +288,24 @@ void closeWin(Window* w)
 
 void updateTitleIfChanges(Window* w) {
         
+    if (!w) return;
+
+    BOOL saved;
     if (w->OpenedFilePtr) {
-        printf("OpenedFilePtr exists\n");
-        printf("in save w->openedFilePtr->fileContent: %ls\n", w->OpenedFilePtr->fileContent);
-		printf("in save current text: %ls\n", getTxtBoxText(w->txt_boxes[0]->txtBox));
-		
-        if (isFileSaved(w)) {
-            SetWindowTextW(w->hwnd, removeWchar(w->fullTitle, L'*'));
-            w->isSaved = TRUE;
-            return;
-        }
-    }                                                                                           // TODO: NEED FIX
-    else {
-        if (!getTxtBoxText(w->txt_boxes[0]->txtBox)) {
-            SetWindowTextW(w->hwnd, removeWchar(w->fullTitle, L'*'));
-            w->isSaved = TRUE;
-            return;
-        }
+        saved = isFileSaved(w);
     }
-    if (w->isSaved) {
-		SetWindowTextW(w->hwnd, merge_str(w->fullTitle, L"*"));
-        
+    else {
+        WCHAR* cur = getTxtBoxText(w->txt_boxes[0]->txtBox);
+        saved = (!cur || cur[0] == L'\0');
+        free(cur);
+    }
+
+    if (saved) {
+        SetWindowTextW(w->hwnd, removeWchar(w->fullTitle, L'*'));
+        w->isSaved = TRUE;
+    }
+    else {
+        SetWindowTextW(w->hwnd, merge_str(w->fullTitle, L"*"));
         w->isSaved = FALSE;
     }
 }
@@ -335,8 +332,11 @@ WCHAR* removeWchar(WCHAR* str, WCHAR charToRemove) {
 BOOL isFileSaved(Window* w) {
 	if (!w || !w->OpenedFilePtr) return FALSE;
 
-	BOOL cmp = wcscmp(getTxtBoxText(w->txt_boxes[0]->txtBox), w->OpenedFilePtr->fileContent) == 0;
+    WCHAR* cur = getTxtBoxText(w->txt_boxes[0]->txtBox);
+	if (!cur || !w->OpenedFilePtr->fileContent) { free(cur); return FALSE; } // if either is NULL, not saved
 
+	BOOL cmp = (wcscmp(cur, w->OpenedFilePtr->fileContent) == 0);
+	free(cur);
 	return cmp;
 }
 

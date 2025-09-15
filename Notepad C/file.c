@@ -29,10 +29,10 @@ void setFileName(File* f, WCHAR* name)
 void destroyFile(File* f)
 {
     if (!f) return;
-    if (f->fileContent) free(f->fileContent);
+    /*if (f->fileContent) free(f->fileContent);*/
     /*if (f->fileName) free(f->fileName);*/
 
-    if (f->hFile) CloseHandle(f->hFile);
+    /*if (f->hFile) CloseHandle(f->hFile);*/
 
 
     free(f);
@@ -127,7 +127,7 @@ WCHAR* getFileContent(File* f)
     
 	wprintf(L"File content read (%d bytes):\n%ls\n", bytesRead, buffer);
 	f->fileContent = buffer;
-    //CloseHandle(f->hFile); //clear handler
+    CloseHandle(f->hFile); //clear handler
 	return f->fileContent;
 }
 
@@ -148,10 +148,16 @@ void writeWCHARToFile(File* f, WCHAR* text)
 
 	if (!f || !text) return;
 
-	f->hFile = CreateFileW(f->fileName, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	f->hFile = CreateFileW(f->fileName, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
 	DWORD bytesWritten;
 	BOOL success = WriteFile(f->hFile, text, (DWORD)(wcslen(text) * sizeof(WCHAR)), &bytesWritten, NULL);
+
+    if (!f->hFile || f->hFile == INVALID_HANDLE_VALUE) {
+        wprintf(L"Error creating or opening file: %d\n", GetLastError());
+        return;
+	}
+
 
 	if (!success) {
 		wprintf(L"Error writing to file: %d\n", GetLastError());
@@ -167,6 +173,11 @@ void writeWCHARToFile(File* f, WCHAR* text)
 }
 
 void saveFile(Window* w) {
+	if (!w) return;
+    if (w->isSaved) {
+        printf("File is already saved, no changes to save.\n");
+        return;
+	}
     WCHAR* currentText = getTxtBoxText(w->txt_boxes[0]->txtBox);
     wprintf(L"Text to save: %ls\n", currentText);
     if (currentText) {
@@ -174,22 +185,36 @@ void saveFile(Window* w) {
         if (!w->openedFileName) {
             // save as logic
             saveFileAs(w);
-
+			return;
         }
         writeWCHARToFile(w->OpenedFilePtr, currentText);
-		w->isSaved = TRUE;
+        free(w->OpenedFilePtr->fileContent);
+        w->OpenedFilePtr->fileContent = _wcsdup(currentText);
+
+        w->isSaved = TRUE;
+		updateTitleIfChanges(w); // update title to remove asterisk
         free(currentText);
     }
 }
 
 void saveFileAs(Window* w) {
+	if (!w) return;
+    if (w->isSaved) {
+        printf("File is already saved, no changes to save.\n");
+        return;
+    }
     File* f = file(w->hwnd);
     WCHAR* fileName = getFileFromDialog(f, FALSE);
+    WCHAR* currentText = getTxtBoxText(w->txt_boxes[0]->txtBox);
     if (fileName) {
         w->openedFileName = fileName;
         updateTitle(w, w->openedFileName);
-        writeWCHARToFile(f, getTxtBoxText(w->txt_boxes[0]->txtBox));
-		w->isSaved = TRUE;
+        writeWCHARToFile(f, currentText);
+		w->OpenedFilePtr = f;
+		w->OpenedFilePtr->fileContent = _wcsdup(currentText); // update file content in struct
+        w->isSaved = TRUE;
+        updateTitleIfChanges(w); // update title to remove asterisk
+		free(currentText);
     }
 }
 
@@ -202,6 +227,7 @@ void openFile(Window* w) {
         destroyFile(f);
         return;
 	}
+    w->openedFileName = f->fileName;
 	getFileContent(f);
 	w->OpenedFilePtr = f;
 	updateTxtBoxText(w->txt_boxes[0]->txtBox, f->fileContent);
